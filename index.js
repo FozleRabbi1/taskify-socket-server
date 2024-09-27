@@ -9,16 +9,15 @@ require("dotenv").config();
 const app = express();
 const server = createServer(app);
 
-// Setup Socket.io with CORS
+
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:5173', // Adjust according to your front-end URL
+    origin: 'http://localhost:5173', 
     methods: ['GET', 'POST'],
     credentials: true
   }
 });
 
-// MongoDB connection URI and options
 const uri = `mongodb://${process.env.DB_NAME}:${process.env.DB_PASS}@realestate-shard-00-00.fobat.mongodb.net:27017,realestate-shard-00-01.fobat.mongodb.net:27017,realestate-shard-00-02.fobat.mongodb.net:27017/?ssl=true&replicaSet=atlas-9ylh6u-shard-0&authSource=admin&retryWrites=true&w=majority&appName=RealEstate`;
 
 const client = new MongoClient(uri, {
@@ -34,7 +33,7 @@ let chatCollection, usersCollection;
 async function connectDB() {
   try {
     await client.connect();
-    const db = client.db('test'); // Change to your database name
+    const db = client.db('test'); 
     chatCollection = db.collection('messages');
     usersCollection = db.collection('users');
     console.log('Connected to MongoDB');
@@ -43,10 +42,8 @@ async function connectDB() {
   }
 }
 
-// Connect to MongoDB
 connectDB();
 
-// Setup CORS middleware for all routes
 app.use(cors({
   origin: 'http://localhost:5173',
   methods: ['GET', 'POST'],
@@ -55,12 +52,12 @@ app.use(cors({
 
 app.use(express.static(join(__dirname, 'build')));
 
-// Serve React frontend
+
 app.get('/', (req, res) => {
   res.sendFile(join(__dirname, 'build', 'index.html'));
 });
 
-// API to get all users
+
 app.get('/users', async (req, res) => {
   try {
     const users = await usersCollection.find().toArray();
@@ -71,7 +68,7 @@ app.get('/users', async (req, res) => {
   }
 });
 
-// API to get chat history between two users
+
 app.get('/chat/:sender/:receiver', async (req, res) => {
   const { sender, receiver } = req.params;
   try {
@@ -88,17 +85,14 @@ app.get('/chat/:sender/:receiver', async (req, res) => {
   }
 });
 
-// Socket.IO connection for real-time chat
 io.on('connection', (socket) => {
   console.log('A user connected');
 
-  // Listen for joining room event
   socket.on('joinRoom', (email) => {
     socket.join(email);
     console.log(`${email} joined their room`);
   });
 
-  // Listen for user-specific chat messages
   socket.on('chatMessage', (data) => {
     const { sender, receiver, message } = data;
 
@@ -109,12 +103,11 @@ io.on('connection', (socket) => {
       timestamp: new Date(),
     };
 
-    // Insert the message into the database
     chatCollection.insertOne(newMessage)
       .then(() => {
         console.log('Message stored in DB:', newMessage);
-        io.to(sender).emit('chatMessage', newMessage); // Send to sender
-        io.to(receiver).emit('chatMessage', newMessage); // Send to receiver
+        io.to(sender).emit('chatMessage', newMessage); 
+        io.to(receiver).emit('chatMessage', newMessage);
       })
       .catch(err => {
         console.error('Error saving message:', err);
@@ -126,7 +119,6 @@ io.on('connection', (socket) => {
   });
 });
 
-// Start the server
 server.listen(3000, () => {
   console.log('Server running at http://localhost:3000');
 });
