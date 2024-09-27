@@ -4,6 +4,7 @@ const { join } = require('path');
 const { Server } = require('socket.io');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const cors = require('cors');
+require("dotenv").config();
 
 const app = express();
 const server = createServer(app);
@@ -18,7 +19,7 @@ const io = new Server(server, {
 });
 
 // MongoDB connection URI and options
-const uri = `mongodb://Taskify:48bnzfIC3Idn70FR@realestate-shard-00-00.fobat.mongodb.net:27017,realestate-shard-00-01.fobat.mongodb.net:27017,realestate-shard-00-02.fobat.mongodb.net:27017/?ssl=true&replicaSet=atlas-9ylh6u-shard-0&authSource=admin&retryWrites=true&w=majority&appName=RealEstate`;
+const uri = `mongodb://${process.env.DB_NAME}:${process.env.DB_PASS}@realestate-shard-00-00.fobat.mongodb.net:27017,realestate-shard-00-01.fobat.mongodb.net:27017,realestate-shard-00-02.fobat.mongodb.net:27017/?ssl=true&replicaSet=atlas-9ylh6u-shard-0&authSource=admin&retryWrites=true&w=majority&appName=RealEstate`;
 
 const client = new MongoClient(uri, {
   serverApi: {
