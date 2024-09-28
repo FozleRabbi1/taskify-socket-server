@@ -36,7 +36,6 @@ async function connectDB() {
     const db = client.db('test'); 
     chatCollection = db.collection('messages');
     usersCollection = db.collection('users');
-    console.log('Connected to MongoDB');
   } catch (err) {
     console.error('MongoDB connection error:', err);
   }
