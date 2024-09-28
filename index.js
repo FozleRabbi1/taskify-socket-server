@@ -9,7 +9,6 @@ require("dotenv").config();
 const app = express();
 const server = createServer(app);
 
-
 const io = new Server(server, {
   cors: {
     origin: 'http://localhost:5173', 
@@ -51,11 +50,9 @@ app.use(cors({
 
 app.use(express.static(join(__dirname, 'build')));
 
-
 app.get('/', (req, res) => {
   res.sendFile(join(__dirname, 'build', 'index.html'));
 });
-
 
 app.get('/users', async (req, res) => {
   try {
@@ -66,7 +63,6 @@ app.get('/users', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch users' });
   }
 });
-
 
 app.get('/chat/:sender/:receiver', async (req, res) => {
   const { sender, receiver } = req.params;
@@ -87,26 +83,38 @@ app.get('/chat/:sender/:receiver', async (req, res) => {
 io.on('connection', (socket) => {
   console.log('A user connected');
 
+  // User joins their room
   socket.on('joinRoom', (email) => {
     socket.join(email);
     console.log(`${email} joined their room`);
   });
 
+  // Handling chat messages
   socket.on('chatMessage', (data) => {
-    const { sender, receiver, message } = data;
+    const { sender, receiver, message, image } = data;
 
     const newMessage = {
       sender,
       receiver,
       message,
       timestamp: new Date(),
+      image
     };
 
     chatCollection.insertOne(newMessage)
       .then(() => {
         console.log('Message stored in DB:', newMessage);
+        
+        // Emit the message to both the sender and receiver
         io.to(sender).emit('chatMessage', newMessage); 
         io.to(receiver).emit('chatMessage', newMessage);
+        
+        // Notify the receiver of the new message (for notifications)
+        io.to(receiver).emit('newMessageNotification', {
+          sender: sender,
+          message: message,
+          timestamp: new Date(),
+        });
       })
       .catch(err => {
         console.error('Error saving message:', err);
